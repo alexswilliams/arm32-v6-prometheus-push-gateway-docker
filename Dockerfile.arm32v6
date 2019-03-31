@@ -2,16 +2,16 @@ FROM arm32v6/alpine:3.9.2
 
 ARG VERSION
 
-RUN mkdir -p /app
-WORKDIR /app
-
-RUN cd /app \
+RUN mkdir /app && cd /app \
     && wget https://github.com/prometheus/pushgateway/releases/download/v${VERSION}/pushgateway-${VERSION}.linux-armv6.tar.gz \
     && tar xzf pushgateway-${VERSION}.linux-armv6.tar.gz \
-    && rm -f pushgateway-${VERSION}.linux-armv6.tar.gz \
-    && mv /app/pushgateway-${VERSION}.linux-armv6/* /app/ \
-    && rmdir /app/pushgateway-${VERSION}.linux-armv6
+    && cp pushgateway-${VERSION}.linux-armv6/pushgateway /bin/ \
+    && rm -rf /app \
+    && mkdir /pushgateway
+
+COPY run.sh /run.sh
+ENV PUSH_GW_VERSION=${VERSION}
 
 EXPOSE 9091
-CMD [ "/app/pushgateway" ]
+ENTRYPOINT [ "sh", "/run.sh" ]
 
