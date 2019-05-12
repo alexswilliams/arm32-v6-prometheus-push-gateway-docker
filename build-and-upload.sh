@@ -8,5 +8,6 @@ function buildAndPush {
     && docker push alexswilliams/arm32v6-prometheus-push-gateway:${version}
 }
 
-buildAndPush "0.7.0"
+# buildAndPush "0.7.0"
+buildAndPush "0.8.0"
 
