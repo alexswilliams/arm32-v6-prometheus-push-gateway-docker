@@ -6,7 +6,6 @@ function buildAndPush {
     local version=$1
     local imagename="alexswilliams/arm32v6-prometheus-push-gateway"
     local fromline=$(grep -e '^FROM ' Dockerfile.arm32v6 | tail -n -1 | sed 's/^FROM[ \t]*//' | sed 's#.*/##' | sed 's/:/-/' | sed 's/#.*//' | sed -E 's/[ \t]+.*//')
-    local fromlineshort=$(echo ${fromline} | sed 's/:.*//')
 
     docker build -t ${imagename}:${version} \
         --build-arg VERSION=${version} \
@@ -14,12 +13,11 @@ function buildAndPush {
         --build-arg VCS_REF=$(git rev-parse --short HEAD) \
         --file Dockerfile.arm32v6 . \
     && docker tag ${imagename}:${version} ${imagename}:${version}-${fromline} \
-    && docker tag ${imagename}:${version} ${imagename}:${version}-${fromlineshort} \
     && docker push ${imagename}:${version} \
-    && docker push ${imagename}:${version}-${fromline} \
-    && docker push ${imagename}:${version}-${fromlineshort}
+    && docker push ${imagename}:${version}-${fromline}
 }
 
 buildAndPush "0.7.0"
 buildAndPush "0.8.0"
 
+curl -X POST "https://hooks.microbadger.com/images/alexswilliams/arm32v6-prometheus-push-gateway/Xrunc81LwVPUfwFs_wAMFS9kffQ="
