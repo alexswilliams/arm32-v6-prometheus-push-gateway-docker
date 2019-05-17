@@ -5,7 +5,7 @@ set -ex
 function buildAndPush {
     local version=$1
     local imagename="alexswilliams/arm32v6-prometheus-push-gateway"
-    local fromline=$(grep -e '^FROM ' Dockerfile.arm32v6 | head -n 1 | sed 's/^FROM[ \t]*//' | sed 's#.*/##' | sed 's/:/-/' | sed 's/#.*//' | sed 's/[ \t]*//')
+    local fromline=$(grep -e '^FROM ' Dockerfile.arm32v6 | tail -n -1 | sed 's/^FROM[ \t]*//' | sed 's#.*/##' | sed 's/:/-/' | sed 's/#.*//' | sed -E 's/[ \t]+.*//')
 
     docker build -t ${imagename}:${version} \
         --build-arg VERSION=${version} \
