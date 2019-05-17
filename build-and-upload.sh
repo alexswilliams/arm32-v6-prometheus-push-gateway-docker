@@ -4,10 +4,19 @@ set -ex
 
 function buildAndPush {
     local version=$1
-    docker build -t alexswilliams/arm32v6-prometheus-push-gateway:${version} --build-arg VERSION=${version} --file Dockerfile.arm32v6 . \
-    && docker push alexswilliams/arm32v6-prometheus-push-gateway:${version}
+    local imagename="alexswilliams/arm32v6-prometheus-push-gateway"
+    local fromline=$(grep -e '^FROM ' Dockerfile.arm32v6 | head -n 1 | sed 's/^FROM[ \t]*//' | sed 's#.*/##' | sed 's/:/-/' | sed 's/#.*//' | sed 's/[ \t]*//')
+
+    docker build -t ${imagename}:${version} \
+        --build-arg VERSION=${version} \
+        --build-arg BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+        --build-arg VCS_REF=$(git rev-parse --short HEAD) \
+        --file Dockerfile.arm32v6 . \
+    && docker tag ${imagename}:${version} ${imagename}:${version}-${fromline} \
+    && docker push ${imagename}:${version} \
+    && docker push ${imagename}:${version}-${fromline}
 }
 
-# buildAndPush "0.7.0"
+buildAndPush "0.7.0"
 buildAndPush "0.8.0"
 
