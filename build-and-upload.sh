@@ -27,7 +27,8 @@ function buildAndPush {
 # buildAndPush "0.8.0"
 # buildAndPush "0.9.0"
 # buildAndPush "0.9.1"
-buildAndPush "0.10.0"
-buildAndPush "1.0.0" latest
+# buildAndPush "0.10.0"
+buildAndPush "1.0.0"
+buildAndPush "1.0.1" latest
 
 curl -X POST "https://hooks.microbadger.com/images/alexswilliams/arm32v6-prometheus-push-gateway/Xrunc81LwVPUfwFs_wAMFS9kffQ="
