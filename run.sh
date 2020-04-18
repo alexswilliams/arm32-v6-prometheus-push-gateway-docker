@@ -1,28 +1,52 @@
-#!/bin/sh
+#!/bin/bash
 
 echo "Starting Prometheus Push Gateway $PUSH_GW_VERSION"
 echo "Relevant Environment Variables (PUSH_GW_*):"
 env | grep PUSH_GW | sort
+echo ""
 
-if [[ "$PUSH_GW_VERSION" < "0.8.0" ]]; then
-  /bin/pushgateway \
-      --web.listen-address=${PUSH_GW_WEB_LISTEN_ADDRESS:-:9091}
-      --web.telemetry-path=${PUSH_GW_WEB_TELEMETRY_PATH:-/metrics}
-      --web.route-prefix=${PUSH_GW_WEB_ROUTE_PREFIX:-""}
-      --persistence.file=${PUSH_GW_PERSISTENCE_FILE:-""}
-      --persistence.interval=${PUSH_GW_PERSISTENCE_INTERVAL:-5m}
-      --log.level=${PUSH_GW_LOG_LEVEL:-info}
-      --log.format=${PUSH_GW_LOG_FORMAT:-logger:stderr}
-      $@
-else
-  /bin/pushgateway \
-      --web.listen-address=${PUSH_GW_WEB_LISTEN_ADDRESS:-:9091}
-      --web.telemetry-path=${PUSH_GW_WEB_TELEMETRY_PATH:-/metrics}
-      --web.external-url=${PUSH_GW_WEB_EXTERNAL_URL:-""}
-      --web.route-prefix=${PUSH_GW_WEB_ROUTE_PREFIX:-""}
-      --persistence.file=${PUSH_GW_PERSISTENCE_FILE:-""}
-      --persistence.interval=${PUSH_GW_PERSISTENCE_INTERVAL:-5m}
-      --log.level=${PUSH_GW_LOG_LEVEL:-info}
-      --log.format=${PUSH_GW_LOG_FORMAT:-logger:stderr}
-      $@
-fi
+
+# Flags updated here: https://github.com/prometheus/pushgateway/blob/master/main.go
+# Logger flags updated here: https://github.com/prometheus/common/blob/master/promlog/flag/flag.go
+
+
+# Booleans are treated specially in kingpin so they need passing in differently.
+declare -a booleans=(
+    web.enable-lifecycle
+    web.enable-admin-api
+    push.disable-consistency-check
+)
+declare -a flags=(
+    web.listen-address
+    web.telemetry-path
+    web.external-url
+    web.route-prefix
+    persistence.file
+    persistence.interval
+    log.format
+    log.level
+)
+
+# Defaults taken from original prometheus Dockerfile
+declare -a command=(
+    "/bin/pushgateway"
+)
+
+for flag in "${booleans[@]}"; do
+    envVarName="PUSH_GW_$(tr 'a-z-.' 'A-Z__' <<< "${flag}")"
+    lowerVarValue="$(tr 'A-Z' 'a-z' <<< "${!envVarName}")"
+    if [ ! -z "${lowerVarValue}" ]; then
+        if [ "${lowerVarValue}" == "true" ]; then command+=("--${flag}"); else command+=("--no-${flag}"); fi
+    fi
+done
+for flag in "${flags[@]}"; do
+    envVarName="PUSH_GW_$(tr 'a-z-.' 'A-Z__' <<< "${flag}")"
+    if [ ! -z "${!envVarName}" ]; then
+        command+=("--${flag}=${!envVarName}")
+    fi
+done
+
+unset envVarName lowerVarValue flag booleans flags
+set -ex
+
+exec "${command[@]}" $@
